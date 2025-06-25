@@ -12,3 +12,20 @@ exports.getPaymentDetails = async (req, res) => {
         res.status(500).send('Error fetching payment: ' + err.message);
     }
 };
+
+exports.addPayment = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { Amount, Method, Status } = req.body;
+        const pool = getPool();
+        await pool.request()
+            .input('OrderID', sql.Int, orderId)
+            .input('Amount', sql.Decimal, Amount)
+            .input('Method', sql.NVarChar, Method)
+            .input('Status', sql.NVarChar, Status)
+            .query('INSERT INTO Payment (OrderID, Amount, PaymentMethod, PaymentStatus, PaymentDate) VALUES (@OrderID, @Amount, @Method, @Status, GETDATE())');
+        res.send('Payment recorded');
+    } catch (err) {
+        res.status(500).send('Error adding payment: ' + err.message);
+    }
+};

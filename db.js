@@ -2,7 +2,7 @@ const sql = require('mssql/msnodesqlv8');
 
 const config = {
     server: 'DESKTOP-0554NIP\\SQLEXPRESS01', 
-    database: 'raani_earrings',
+    database: 'RAANIDB',
     driver: 'msnodesqlv8',
     options: {
         trustedConnection: true

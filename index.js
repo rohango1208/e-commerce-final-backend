@@ -26,8 +26,27 @@ app.get('/', (req, res) => {
   res.send('Welcome to Raani Earrings API 💍');
 });
 
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Raani API',
+      version: '1.0.0',
+    },
+  },
+  apis: ['./routes/*.js'], // Your route files
+};
+
+const swaggerSpec = swaggerJsdoc(options);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 connectDB().then(() => {
-  app.listen(3000, () => {
-    console.log('🚀 API is live at http://localhost:3000');
+  app.listen(5000, () => {
+    console.log('🚀 API is live at http://localhost:5000');
   });
 });
