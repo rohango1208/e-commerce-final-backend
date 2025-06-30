@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
+const { getPool, sql } = require('../db');
+
 const {
   getAllUsers,
   createUser,
@@ -99,9 +102,27 @@ router.post('/register', createUser);
  *         description: Invalid credentials
  *       500:
  *         description: Login error
- */
+*/
 router.post('/login', loginUser);
 
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const result = await pool.request()
+      .input('UserID', sql.Int, req.user._id) // ✅ decoded from JWT
+      .query('SELECT UserID, Name, Email, Phone, Role FROM [User] WHERE UserID = @UserID');
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error("❌ Error fetching user:", err.message);
+    res.status(500).json({ message: "Error fetching user", error: err.message });
+  }
+});
 /**
  * @swagger
  * /users/{id}:

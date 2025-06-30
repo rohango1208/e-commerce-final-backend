@@ -75,6 +75,7 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+
 // PUT: Update product
 exports.updateProduct = async (req, res) => {
   try {
