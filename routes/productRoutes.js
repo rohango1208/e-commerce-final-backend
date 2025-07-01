@@ -73,8 +73,6 @@ router.get('/detailed', getProductsWithCategory);
  *                   format: float
  *                 CategoryID:
  *                   type: integer
- *                 UserID:
- *                   type: integer
  *                 CategoryName:
  *                   type: string
  *       404:
