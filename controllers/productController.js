@@ -24,42 +24,69 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
+
 // ✅ GET products with category name (detailed)
 // In productController.js
 exports.getProductsWithCategory = async (req, res) => {
   try {
     const { categoryId } = req.query;
     const pool = getPool();
+    const request = pool.request();
 
     let query = `
-      SELECT p.ProductID AS id, p.Name, p.Price, p.ImageURL, p.Description,
-             p.CategoryID, c.Name AS CategoryName
+      SELECT 
+        p.ProductID AS id, 
+        p.Name, 
+        p.Price, 
+        p.ImageURL, 
+        p.Description, 
+        p.CategoryID, 
+        p.Discount AS discount,
+        p.StockQuantity AS stockQuantity,
+        c.Name AS CategoryName
       FROM Product p
       LEFT JOIN Category c ON p.CategoryID = c.CategoryID
     `;
 
     if (categoryId) {
+      request.input("CategoryID", sql.Int, categoryId);
       query += " WHERE p.CategoryID = @CategoryID";
     }
 
-    const result = await pool
-      .request()
-      .input("CategoryID", sql.Int, categoryId)
-      .query(query);
+    const result = await request.query(query);
 
-    res.json(result.recordset);
+    res.status(200).json(result.recordset);
   } catch (err) {
-    res.status(500).send("DB Error: " + err.message);
+    res.status(500).json({ message: "DB Error: " + err.message });
   }
 };
+
+
 
 // ✅ GET product by ID
 exports.getProductByProductId = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "❌ Invalid Product ID" });
+    }
+
     const pool = getPool();
-    const result = await pool.request().input("ProductID", sql.Int, id).query(`
-        SELECT p.ProductID AS id, p.Name, p.Price, p.ImageURL, p.Description, p.CategoryID, c.Name AS CategoryName
+
+    const result = await pool.request()
+      .input("ProductID", sql.Int, parseInt(id))
+      .query(`
+        SELECT 
+          p.ProductID AS id, 
+          p.Name, 
+          p.Price, 
+          p.ImageURL, 
+          p.Description, 
+          p.Discount AS discount,
+          p.StockQuantity AS stockQuantity,
+          p.CategoryID, 
+          c.Name AS CategoryName
         FROM Product p
         LEFT JOIN Category c ON p.CategoryID = c.CategoryID
         WHERE p.ProductID = @ProductID
@@ -69,11 +96,15 @@ exports.getProductByProductId = async (req, res) => {
       return res.status(404).json({ message: "❌ Product not found" });
     }
 
-    res.json(result.recordset[0]);
+    res.status(200).json(result.recordset[0]);
+
   } catch (err) {
-    res.status(500).send("DB Error: " + err.message);
+    console.error("❌ Database Error:", err);
+    res.status(500).json({ message: "DB Error: " + err.message });
   }
 };
+
+
 
 // ✅ CREATE product
 exports.createProduct = async (req, res) => {
@@ -120,9 +151,10 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { Name, Price, ImageURL, CategoryID, Description } = req.body;
+    const { Name, Price, ImageURL, CategoryID, Description, Discount = 0, StockQuantity = 0 } = req.body;
 
     const pool = getPool();
+
     const exists = await pool
       .request()
       .input("ProductID", sql.Int, id)
@@ -139,18 +171,24 @@ exports.updateProduct = async (req, res) => {
       .input("Price", sql.Decimal(10, 2), Price)
       .input("ImageURL", sql.VarChar, ImageURL)
       .input("CategoryID", sql.Int, CategoryID)
-      .input("Description", sql.VarChar, Description).query(`
+      .input("Description", sql.VarChar, Description)
+      .input("Discount", sql.Decimal(5, 2), Discount)               // ✅ Added
+      .input("StockQuantity", sql.Int, StockQuantity)               // ✅ Added
+      .query(`
         UPDATE Product
-        SET Name = @Name, Price = @Price, ImageURL = @ImageURL,
-            CategoryID = @CategoryID, Description = @Description
+        SET Name = @Name, 
+            Price = @Price, 
+            ImageURL = @ImageURL,
+            CategoryID = @CategoryID, 
+            Description = @Description,
+            Discount = @Discount,                -- ✅ Added
+            StockQuantity = @StockQuantity       -- ✅ Added
         WHERE ProductID = @ProductID
       `);
 
     res.json({ message: "✅ Product updated" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "❌ Error updating product: " + err.message });
+    res.status(500).json({ message: "❌ Error updating product: " + err.message });
   }
 };
 
