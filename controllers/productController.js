@@ -65,17 +65,24 @@ exports.getProductsWithCategory = async (req, res) => {
 
 // ✅ GET product by ID
 exports.getProductByProductId = async (req, res) => {
+  const { id } = req.params;
+
+  // console.log("🔍 Received Product ID:", id);
+
+  // Validate ID
+  const productId = parseInt(id, 10);
+  if (isNaN(productId)) {
+    // console.error("❌ Invalid Product ID:", id);
+    return res.status(400).json({ message: "❌ Invalid Product ID" });
+  }
+
   try {
-    const { id } = req.params;
-
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "❌ Invalid Product ID" });
-    }
-
     const pool = getPool();
 
+    // console.log("✅ Database connection acquired");
+
     const result = await pool.request()
-      .input("ProductID", sql.Int, parseInt(id))
+      .input("ProductID", sql.Int, productId)
       .query(`
         SELECT 
           p.ProductID AS id, 
@@ -92,18 +99,22 @@ exports.getProductByProductId = async (req, res) => {
         WHERE p.ProductID = @ProductID
       `);
 
+    // console.log("✅ Query executed. Rows fetched:", result.recordset.length);
+
     if (result.recordset.length === 0) {
+      // console.warn("⚠️ No product found with ID:", productId);
       return res.status(404).json({ message: "❌ Product not found" });
     }
+
+    // console.log("✅ Product found:", result.recordset[0]);
 
     res.status(200).json(result.recordset[0]);
 
   } catch (err) {
-    console.error("❌ Database Error:", err);
+    // console.error("❌ Database Error:", err);
     res.status(500).json({ message: "DB Error: " + err.message });
   }
 };
-
 
 
 // ✅ CREATE product
