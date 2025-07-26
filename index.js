@@ -21,7 +21,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
-
+const stripeRoutes = require('./routes/stipeRoutes')
 // Use routes
 app.use('/users', userRoutes);
 app.use('/products', productRoutes);
@@ -30,6 +30,7 @@ app.use('/wishlist', wishlistRoutes);
 app.use('/orders', orderRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/tracking', trackingRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Swagger
 const swaggerJsdoc = require('swagger-jsdoc');
